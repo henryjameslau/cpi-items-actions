@@ -1,7 +1,6 @@
 import pandas as pd
 import requests
 import urllib.request, json 
-import re
 from datetime import datetime,date
 
 # set average price reference month
