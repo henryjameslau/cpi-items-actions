@@ -1,6 +1,7 @@
 import pandas as pd
-import requests
-import urllib.request, json 
+# import requests
+# import urllib.request
+import json 
 import time
 from datetime import datetime,date
 from selenium import webdriver
@@ -38,14 +39,14 @@ latestmonth=datetime.strptime(unchained.columns[-1],"%Y-%m-%d  %H:%M:%S")
 options = webdriver.ChromeOptions() 
 options.add_argument('--headless=new') 
 with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options) as driver: 
-
+    print('selenium1')
     driver.get("https://corsproxy.io/?https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes/data")
     
     # the browser was opened indeed
     time.sleep(1)
     
     text= driver.find_element(By.TAG_NAME,'pre').text
-    print(text)
+
     data = json.loads(text)
     datasets = data['datasets']
     
