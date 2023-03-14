@@ -43,7 +43,7 @@ with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), op
     driver.get("https://corsproxy.io/?https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes/data")
     
     time.sleep(1)
-    
+    print(driver.title)
     text= driver.find_element(By.TAG_NAME,'pre').text
 
     data = json.loads(text)
