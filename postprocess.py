@@ -1,7 +1,12 @@
 import pandas as pd
 import requests
 import urllib.request, json 
+import time
 from datetime import datetime,date
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service as ChromeService 
+from webdriver_manager.chrome import ChromeDriverManager 
 
 # set average price reference month
 avgpriceRefMonth=pd.Timestamp('2022-01-01 00:00:00')
@@ -26,9 +31,25 @@ latestmonth=datetime.strptime(unchained.columns[-1],"%Y-%m-%d  %H:%M:%S")
 
 # first get the data.json from the cpi items and prices page
 
-with urllib.request.urlopen("https://corsproxy.io/?https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes/data") as url:
-    data = json.load(url)
-    datasets=data['datasets']
+# with urllib.request.urlopen("https://corsproxy.io/?https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes/data") as url:
+#     data = json.load(url)
+#     datasets=data['datasets']
+
+options = webdriver.ChromeOptions() 
+options.add_argument('--headless=new') 
+with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options) as driver: 
+
+    driver.get("https://corsproxy.io/?https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes/data")
+    
+    # the browser was opened indeed
+    time.sleep(1)
+
+    text= driver.find_element(By.TAG_NAME,'pre').text
+    parsed = json.loads(text)
+    datasets = parsed['datasets']
+    
+    # closing browser
+    driver.close()
 
 #go through the dataset and find the first one which doesn't contain the word framework, glossary or /pricequotes. The url includes pricesquotes so that slash is important. Save the index as the variable match  
 for i,dataset in enumerate(datasets):
