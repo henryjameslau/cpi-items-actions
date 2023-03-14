@@ -69,6 +69,7 @@ print('the date from url:'+date)
 #parse it as a date
 itemmonth=datetime.strptime(date,"%B%Y")
 
+print(itemmonth,latestmonth,itemmonth!=latestmonth)
 # check date to see if you need to download a file
 if(itemmonth!=latestmonth):
     print('month from indices is different to latest month in unchained csv')
@@ -76,7 +77,7 @@ if(itemmonth!=latestmonth):
     # with urllib.request.urlopen("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data") as itemsurl:
     #     itemspage = json.load(itemsurl)
         # csv=itemspage['downloads'][0]['file']
-
+    print('selenium2')
     with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options) as driver: 
         driver.get("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data")
         
@@ -120,7 +121,7 @@ if(itemmonth!=latestmonth):
     un.set_index("ITEM_ID",inplace=True)
     
     #and save it
-    un.to_csv('unchained.csv')
+    # un.to_csv('unchained.csv')
 
     #create a copy of unchained to create the chained indices
     chained = un.copy()
