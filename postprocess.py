@@ -78,7 +78,7 @@ if(itemmonth!=latestmonth):
         # csv=itemspage['downloads'][0]['file']
 
     with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options) as driver: 
-        driver.get("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data"")
+        driver.get("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data")
         
         # the browser was opened indeed
         time.sleep(1)
