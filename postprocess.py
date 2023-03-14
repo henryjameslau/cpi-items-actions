@@ -45,8 +45,8 @@ with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), op
     time.sleep(1)
 
     text= driver.find_element(By.TAG_NAME,'pre').text
-    parsed = json.loads(text)
-    datasets = parsed['datasets']
+    data = json.loads(text)
+    datasets = data['datasets']
     
     # closing browser
     driver.close()
@@ -72,9 +72,22 @@ itemmonth=datetime.strptime(date,"%B%Y")
 if(itemmonth!=latestmonth):
     print('month from indices is different to latest month in unchained csv')
     # download the file
-    with urllib.request.urlopen("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data") as itemsurl:
-        itemspage = json.load(itemsurl)
-        csv=itemspage['downloads'][0]['file']
+    # with urllib.request.urlopen("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data") as itemsurl:
+    #     itemspage = json.load(itemsurl)
+        # csv=itemspage['downloads'][0]['file']
+
+    with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options) as driver: 
+        driver.get("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data"")
+        
+        # the browser was opened indeed
+        time.sleep(1)
+
+        itemsurl= driver.find_element(By.TAG_NAME,'pre').text
+        itemspage = json.loads(itemsurl)
+        csv = itemspage['downloads'][0]['file']
+       
+        # closing browser
+        driver.close()
     
     # get the csv of the latest indices
     df = pd.read_csv("https://corsproxy.io/?https://www.ons.gov.uk/file?uri="+items+"/"+csv)
