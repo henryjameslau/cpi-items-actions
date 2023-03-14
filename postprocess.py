@@ -43,8 +43,9 @@ with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), op
     
     # the browser was opened indeed
     time.sleep(1)
-
+    
     text= driver.find_element(By.TAG_NAME,'pre').text
+    print(text)
     data = json.loads(text)
     datasets = data['datasets']
     
