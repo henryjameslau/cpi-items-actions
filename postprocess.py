@@ -79,9 +79,9 @@ print(itemmonth,latestmonth,itemmonth!=latestmonth)
 if(itemmonth!=latestmonth):
     print('month from indices is different to latest month in unchained csv')
     # download the file
-    with urllib.request.urlopen("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data",headers={'User-Agent': 'Mozilla/5.0'}) as itemsurl:
-        itemspage = json.load(itemsurl)
-        csv=itemspage['downloads'][0]['file']
+    # with urllib.request.urlopen("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data",headers={'User-Agent': 'Mozilla/5.0'}) as itemsurl:
+    #     itemspage = json.load(itemsurl)
+    #     csv=itemspage['downloads'][0]['file']
 
     with requests.Session() as s:
         r=s.get("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data",headers={'User-Agent': 'Mozilla/5.0'})
