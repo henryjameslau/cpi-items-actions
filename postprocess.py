@@ -1,6 +1,6 @@
 import pandas as pd
 import requests
-import urllib.request
+# import urllib.request
 import json 
 import time
 from datetime import datetime,date
@@ -32,9 +32,14 @@ latestmonth=datetime.strptime(unchained.columns[-1],"%d/%m/%Y  %H:%M")
 
 # first get the data.json from the cpi items and prices page
 
-with urllib.request.urlopen("https://corsproxy.io/?https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes/data",headers={'User-Agent': 'Mozilla/5.0'}) as url:
-    data = json.load(url)
-    datasets=data['datasets']
+# with urllib.request.urlopen("https://corsproxy.io/?https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes/data",headers={'User-Agent': 'Mozilla/5.0'}) as url:
+#     data = json.load(url)
+#     datasets=data['datasets']
+
+with requests.Session() as s:
+    r=s.get("https://corsproxy.io/?https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes/data",headers={'User-Agent': 'Mozilla/5.0'})
+    data = r.json()
+    datasets = data['datasets']
 # print('preselenium')
 # options = webdriver.ChromeOptions() 
 # options.add_argument('--headless=new') 
@@ -77,6 +82,11 @@ if(itemmonth!=latestmonth):
     with urllib.request.urlopen("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data",headers={'User-Agent': 'Mozilla/5.0'}) as itemsurl:
         itemspage = json.load(itemsurl)
         csv=itemspage['downloads'][0]['file']
+
+    with requests.Session() as s:
+        r=s.get("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data",headers={'User-Agent': 'Mozilla/5.0'})
+        itemspage = r.json()
+        csv = itemspage['downloads'][0]['file']
     # print('selenium2')
     # with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options) as driver: 
     #     driver.get("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data")
@@ -126,7 +136,7 @@ if(itemmonth!=latestmonth):
     un.set_index("ITEM_ID",inplace=True)
     
     #and save it
-    # un.to_csv('unchained.csv')
+    un.to_csv('unchained.csv')
 
     #create a copy of unchained to create the chained indices
     chained = un.copy()
