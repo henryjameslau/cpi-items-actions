@@ -1,5 +1,5 @@
 import pandas as pd
-# import requests
+import requests
 # import urllib.request
 import json 
 import time
@@ -32,25 +32,25 @@ latestmonth=datetime.strptime(unchained.columns[-1],"%d/%m/%Y  %H:%M")
 
 # first get the data.json from the cpi items and prices page
 
-# with urllib.request.urlopen("https://corsproxy.io/?https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes/data") as url:
-#     data = json.load(url)
-#     datasets=data['datasets']
-print('preselenium')
-options = webdriver.ChromeOptions() 
-options.add_argument('--headless=new') 
-with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options) as driver: 
-    print('selenium1')
-    driver.get("https://corsproxy.io/?https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes/data")
+with urllib.request.urlopen("https://corsproxy.io/?https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes/data",headers={'User-Agent': 'Mozilla/5.0'}) as url:
+    data = json.load(url)
+    datasets=data['datasets']
+# print('preselenium')
+# options = webdriver.ChromeOptions() 
+# options.add_argument('--headless=new') 
+# with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options) as driver: 
+#     print('selenium1')
+#     driver.get("https://corsproxy.io/?https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes/data")
     
-    time.sleep(1)
-    print(driver.title)
-    text= driver.find_element(By.TAG_NAME,'pre').text
+#     time.sleep(1)
+#     print(driver.title)
+#     text= driver.find_element(By.TAG_NAME,'pre').text
 
-    data = json.loads(text)
-    datasets = data['datasets']
+#     data = json.loads(text)
+#     datasets = data['datasets']
     
-    # closing browser
-    driver.close()
+#     # closing browser
+#     driver.close()
 
 #go through the dataset and find the first one which doesn't contain the word framework, glossary or /pricequotes. The url includes pricesquotes so that slash is important. Save the index as the variable match  
 for i,dataset in enumerate(datasets):
@@ -74,25 +74,30 @@ print(itemmonth,latestmonth,itemmonth!=latestmonth)
 if(itemmonth!=latestmonth):
     print('month from indices is different to latest month in unchained csv')
     # download the file
-    # with urllib.request.urlopen("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data") as itemsurl:
-    #     itemspage = json.load(itemsurl)
-        # csv=itemspage['downloads'][0]['file']
-    print('selenium2')
-    with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options) as driver: 
-        driver.get("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data")
+    with urllib.request.urlopen("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data",headers={'User-Agent': 'Mozilla/5.0'}) as itemsurl:
+        itemspage = json.load(itemsurl)
+        csv=itemspage['downloads'][0]['file']
+    # print('selenium2')
+    # with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options) as driver: 
+    #     driver.get("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data")
         
-        # the browser was opened indeed
-        time.sleep(1)
+    #     # the browser was opened indeed
+    #     time.sleep(1)
 
-        itemsurl= driver.find_element(By.TAG_NAME,'pre').text
-        itemspage = json.loads(itemsurl)
-        csv = itemspage['downloads'][0]['file']
+    #     itemsurl= driver.find_element(By.TAG_NAME,'pre').text
+    #     itemspage = json.loads(itemsurl)
+    #     csv = itemspage['downloads'][0]['file']
        
-        # closing browser
-        driver.close()
+    #     # closing browser
+    #     driver.close()
     
     # get the csv of the latest indices
-    df = pd.read_csv("https://corsproxy.io/?https://www.ons.gov.uk/file?uri="+items+"/"+csv)
+    # df = pd.read_csv("https://corsproxy.io/?https://www.ons.gov.uk/file?uri="+items+"/"+csv)
+    with requests.Session() as s:
+        download = s.get("https://corsproxy.io/?https://www.ons.gov.uk/file?uri="+items+"/"+csv,headers={'User-Agent': 'Mozilla/5.0'})
+        
+        df=pd.read_csv(io.StringIO(download.content.decode('utf-8')))
+        
     #get the index date which is the first cell
     index_date=df.iloc[0,0]
     #join it onto existing csv
