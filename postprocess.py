@@ -5,10 +5,10 @@ import json
 import time
 import io
 from datetime import datetime,date
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service as ChromeService 
-from webdriver_manager.chrome import ChromeDriverManager 
+# from selenium import webdriver
+# from selenium.webdriver.common.by import By
+# from selenium.webdriver.chrome.service import Service as ChromeService 
+# from webdriver_manager.chrome import ChromeDriverManager 
 
 # set average price reference month
 avgpriceRefMonth=pd.Timestamp('2022-01-01 00:00:00')
@@ -29,7 +29,7 @@ def split(strng, sep, pos):
 unchained = pd.read_csv('unchained.csv')
 
 #find the last month in the unchained file
-latestmonth=datetime.strptime(unchained.columns[-1],"%d/%m/%Y  %H:%M")
+latestmonth=datetime.strptime(unchained.columns[-1],"%Y-%m-%d %H:%M:%S")
 
 # first get the data.json from the cpi items and prices page
 
@@ -106,13 +106,12 @@ if(itemmonth!=latestmonth):
     # df = pd.read_csv("https://corsproxy.io/?https://www.ons.gov.uk/file?uri="+items+"/"+csv)
     with requests.Session() as s:
         download = s.get("https://corsproxy.io/?https://www.ons.gov.uk/file?uri="+items+"/"+csv,headers={'User-Agent': 'Mozilla/5.0'})
-        
         df=pd.read_csv(io.StringIO(download.content.decode('utf-8')))
         
     #get the index date which is the first cell
     index_date=df.iloc[0,0]
     #join it onto existing csv
-    un=unchained.merge(df[['ITEM_ID','ALL_GM_INDEX']].rename(columns={"ALL_GM_INDEX": index_date}),on='ITEM_ID',how='left')
+    un=unchained.merge(df[['ITEM_ID','ALL_GM_INDEX']].rename(columns={"ALL_GM_INDEX": datetime.strptime(str(index_date), "%Y%m")}),on='ITEM_ID',how='left')
 
         
     # parse columns as dates
@@ -120,7 +119,7 @@ if(itemmonth!=latestmonth):
     columns = {}
     for col in un.columns:
         try:
-            columns[col] = datetime.strptime(str(col), "%Y%m")
+            columns[col] = datetime.strptime(str(col), "%Y-%m-%d %H:%M:%S")
         except ValueError:
             pass
     un.rename(columns=columns, inplace=True)
@@ -137,14 +136,13 @@ if(itemmonth!=latestmonth):
     un.set_index("ITEM_ID",inplace=True)
     
     #and save it
-    un.to_csv('unchained.csv')
+    # un.to_csv('unchained.csv')
 
     #create a copy of unchained to create the chained indices
     chained = un.copy()
 
     for col in chained:
         for i, row_value in chained[col].items():
-            # print(col,i,row_value,meta.loc[i,'ITEM_START'])
             if(col>=meta.loc[i,'ITEM_START']):
                 if(col==pd.Timestamp('2017-01-01 00:00:00')):
                     chained.at[i,col]=100
