@@ -3,6 +3,7 @@ import requests
 # import urllib.request
 import json 
 import time
+import io
 from datetime import datetime,date
 from selenium import webdriver
 from selenium.webdriver.common.by import By
