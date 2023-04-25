@@ -1,17 +1,17 @@
 import pandas as pd
 import requests
-# import urllib.request
-import json 
-import time
+import urllib.request, json 
+import re
 import io
+import time
+import openpyxl
 from datetime import datetime,date
-# from selenium import webdriver
-# from selenium.webdriver.common.by import By
-# from selenium.webdriver.chrome.service import Service as ChromeService 
-# from webdriver_manager.chrome import ChromeDriverManager 
 
 # set average price reference month
-avgpriceRefMonth=pd.Timestamp('2022-01-01 00:00:00')
+avgpriceRefMonth=pd.Timestamp('2023-01-01 00:00:00')
+
+# starting reference point
+startref=pd.Timestamp('2018-01-01 00:00:00')
 
 custom_date_parser = lambda x: datetime.strptime(x, "%Y%m")
 
@@ -29,34 +29,15 @@ def split(strng, sep, pos):
 unchained = pd.read_csv('unchained.csv')
 
 #find the last month in the unchained file
-latestmonth=datetime.strptime(unchained.columns[-1],"%Y-%m-%d %H:%M:%S")
+latestmonth=datetime.strptime(unchained.columns[-1],"%Y-%m-%d")
 
 # first get the data.json from the cpi items and prices page
-
-# with urllib.request.urlopen("https://corsproxy.io/?https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes/data",headers={'User-Agent': 'Mozilla/5.0'}) as url:
-#     data = json.load(url)
-#     datasets=data['datasets']
 
 with requests.Session() as s:
     r=s.get("https://corsproxy.io/?https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes/data",headers={'User-Agent': 'Mozilla/5.0'})
     data = r.json()
     datasets = data['datasets']
-# print('preselenium')
-# options = webdriver.ChromeOptions() 
-# options.add_argument('--headless=new') 
-# with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options) as driver: 
-#     print('selenium1')
-#     driver.get("https://corsproxy.io/?https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes/data")
-    
-#     time.sleep(1)
-#     print(driver.title)
-#     text= driver.find_element(By.TAG_NAME,'pre').text
 
-#     data = json.loads(text)
-#     datasets = data['datasets']
-    
-#     # closing browser
-#     driver.close()
 
 #go through the dataset and find the first one which doesn't contain the word framework, glossary or /pricequotes. The url includes pricesquotes so that slash is important. Save the index as the variable match  
 for i,dataset in enumerate(datasets):
@@ -80,51 +61,33 @@ print(itemmonth,latestmonth,itemmonth!=latestmonth)
 if(itemmonth!=latestmonth):
     print('month from indices is different to latest month in unchained csv')
     # download the file
-    # with urllib.request.urlopen("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data",headers={'User-Agent': 'Mozilla/5.0'}) as itemsurl:
-    #     itemspage = json.load(itemsurl)
-    #     csv=itemspage['downloads'][0]['file']
-
     with requests.Session() as s:
         r=s.get("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data",headers={'User-Agent': 'Mozilla/5.0'})
         itemspage = r.json()
         csv = itemspage['downloads'][0]['file']
-    # print('selenium2')
-    # with webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options) as driver: 
-    #     driver.get("https://corsproxy.io/?https://www.ons.gov.uk"+items+"/data")
-        
-    #     # the browser was opened indeed
-    #     time.sleep(1)
-
-    #     itemsurl= driver.find_element(By.TAG_NAME,'pre').text
-    #     itemspage = json.loads(itemsurl)
-    #     csv = itemspage['downloads'][0]['file']
-       
-    #     # closing browser
-    #     driver.close()
     
     # get the csv of the latest indices
-    # df = pd.read_csv("https://corsproxy.io/?https://www.ons.gov.uk/file?uri="+items+"/"+csv)
+
     with requests.Session() as s:
         download = s.get("https://corsproxy.io/?https://www.ons.gov.uk/file?uri="+items+"/"+csv,headers={'User-Agent': 'Mozilla/5.0'})
         df=pd.read_csv(io.StringIO(download.content.decode('utf-8')))
         
     #get the index date which is the first cell
     index_date=df.iloc[0,0]
-    #join it onto existing csv
-    un=unchained.merge(df[['ITEM_ID','ALL_GM_INDEX']].rename(columns={"ALL_GM_INDEX": datetime.strptime(str(index_date), "%Y%m")}),on='ITEM_ID',how='left')
 
-        
-    # parse columns as dates
+    # parse columns as dates in unchained
     # https://stackoverflow.com/questions/42472418/parse-file-headers-as-date-objects-in-python-pandas
     columns = {}
-    for col in un.columns:
+    for col in unchained.columns:
         try:
-            columns[col] = datetime.strptime(str(col), "%Y-%m-%d %H:%M:%S")
+            columns[col] = datetime.strptime(str(col), "%Y-%m-%d")
         except ValueError:
             pass
-    un.rename(columns=columns, inplace=True)
+    unchained.rename(columns=columns, inplace=True)
     
-    
+    #join it onto existing csv
+    un=unchained.merge(df[['ITEM_ID','ALL_GM_INDEX']].rename(columns={"ALL_GM_INDEX": datetime.strptime(str(index_date),"%Y%m")}),on='ITEM_ID',how='left')
+        
     #if last date is Jan, then chain it to december
     if(un.columns[-1].month == 1):
         print('chaining jan')
@@ -136,22 +99,23 @@ if(itemmonth!=latestmonth):
     un.set_index("ITEM_ID",inplace=True)
     
     #and save it
-    # un.to_csv('unchained.csv')
+    un.to_csv('unchained.csv')
 
     #create a copy of unchained to create the chained indices
     chained = un.copy()
 
     for col in chained:
         for i, row_value in chained[col].items():
+            # print(col,i,row_value,meta.loc[i,'ITEM_START'])
             if(col>=meta.loc[i,'ITEM_START']):
-                if(col==pd.Timestamp('2017-01-01 00:00:00')):
+                if(col==startref):
                     chained.at[i,col]=100
                 # elif(col==meta.loc[i,'ITEM_START']):
                 #     sample.at[i,col]=row_value
-                elif(col<=pd.Timestamp('2018-01-01 00:00:00')):
+                elif(col<=startref+pd.tseries.offsets.DateOffset(years=1)):
                     chained.at[i,col]=row_value
                 else:
-                    if(col.month==1 and col>pd.Timestamp('2018-01-01 00:00:00')):
+                    if(col.month==1 and col>startref+pd.tseries.offsets.DateOffset(years=1)):
                         chained.at[i,col]=float(row_value)*float(chained.loc[i][datetime(col.year-1,12,1)])/100
                     else:
                         chained.at[i,col]=float(row_value)*float(chained.loc[i][datetime(col.year,1,1)])/100
@@ -212,3 +176,12 @@ if(itemmonth!=latestmonth):
                     float(chained.loc[i,col-pd.tseries.offsets.DateOffset(months=1)])
                     
     monthlygrowth.to_csv('monthlygrowth.csv')
+
+    #turn it into a excel datadownload file
+    with pd.ExcelWriter("datadownload.xlsx") as writer:
+        meta.to_excel(writer, sheet_name="metadata")  
+        un.to_excel(writer, sheet_name="unchained")
+        avgprice.to_excel(writer, sheet_name="averageprice")
+        monthlygrowth.to_excel(writer, sheet_name="monthlygrowth")
+        annualgrowth.to_excel(writer,sheet_name="annualgrowth")
+    
