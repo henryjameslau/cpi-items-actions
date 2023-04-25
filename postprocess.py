@@ -4,7 +4,6 @@ import urllib.request, json
 import re
 import io
 import time
-import openpyxl
 from datetime import datetime,date
 
 # set average price reference month
