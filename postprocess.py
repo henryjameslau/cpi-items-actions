@@ -28,7 +28,7 @@ def split(strng, sep, pos):
 unchained = pd.read_csv('unchained.csv')
 
 #find the last month in the unchained file
-latestmonth=datetime.strptime(unchained.columns[-1],"%Y-%m-%d")
+latestmonth=datetime.strptime(unchained.columns[-1],"%Y-%m-%d %H:%M:%S")
 
 # first get the data.json from the cpi items and prices page
 
@@ -79,7 +79,7 @@ if(itemmonth!=latestmonth):
     columns = {}
     for col in unchained.columns:
         try:
-            columns[col] = datetime.strptime(str(col), "%Y-%m-%d")
+            columns[col] = datetime.strptime(str(col), "%Y-%m-%d  %H:%M:%S")
         except ValueError:
             pass
     unchained.rename(columns=columns, inplace=True)
