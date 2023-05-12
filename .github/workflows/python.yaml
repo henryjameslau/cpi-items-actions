@@ -27,7 +27,7 @@ jobs:
       - name: Execute Python script # Run the python script to get the latest data
         run: python postprocess.py
 
-      - name: Commit and Push The Results From Python Selenium Action
+      - name: Commit and Push The Results From Python
         run: |
          git config --global user.name "github-actions[bot]"
          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"

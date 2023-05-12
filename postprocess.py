@@ -1,10 +1,12 @@
 import pandas as pd
 import requests
-import urllib.request, json 
-import re
 import io
-import time
+import json
 from datetime import datetime,date
+
+#save timestamp to text file
+with open('timestamp.txt', 'w') as f:
+    f.write(date.today())
 
 # set average price reference month
 avgpriceRefMonth=pd.Timestamp('2023-01-01 00:00:00')
@@ -55,7 +57,7 @@ print('the date from url:'+date)
 #parse it as a date
 itemmonth=datetime.strptime(date,"%B%Y")
 
-print(itemmonth,latestmonth,itemmonth!=latestmonth)
+
 # check date to see if you need to download a file
 if(itemmonth!=latestmonth):
     print('month from indices is different to latest month in unchained csv')
@@ -96,6 +98,15 @@ if(itemmonth!=latestmonth):
             un.at[index,jancol]=un.loc[index,prevdec]*value/100
     
     un.set_index("ITEM_ID",inplace=True)
+
+    #rename columns to dates without time formats
+    columns = {}
+    for col in un.columns:
+        try:
+            columns[col] = col.date()
+        except ValueError:
+            pass
+    un.rename(columns=columns, inplace=True)
     
     #and save it
     un.to_csv('unchained.csv')
@@ -115,7 +126,7 @@ if(itemmonth!=latestmonth):
                     chained.at[i,col]=row_value
                 else:
                     if(col.month==1 and col>startref+pd.tseries.offsets.DateOffset(years=1)):
-                        chained.at[i,col]=float(row_value)*float(chained.loc[i][datetime(col.year-1,12,1)])/100
+                        chained.at[i,col]=float(row_value)*float(chained.loc[i][datetime(col.year-1,1,1)])/100
                     else:
                         chained.at[i,col]=float(row_value)*float(chained.loc[i][datetime(col.year,1,1)])/100
                         
@@ -125,7 +136,16 @@ if(itemmonth!=latestmonth):
             else:
                 chained.at[i,col]=None
 
-    chained.to_csv('chained.csv')
+    #rename columns to dates without time formats
+    columns = {}
+    for col in chained.columns:
+        try:
+            columns[col] = col.date()
+        except ValueError:
+            pass
+    chained.rename(columns=columns, inplace=True)
+
+    chained.astype(float).round(3).to_csv('chained.csv',date_format='%Y-%m-%d',na_rep='')
 
     # Then calculate average prices
     avgprice=chained.copy()
@@ -138,49 +158,76 @@ if(itemmonth!=latestmonth):
                 avgprice.at[i,col]=float(row_value)/ \
                 float(chained.loc[i,avgpriceRefMonth])* \
                 float(meta.loc[i,'AVERAGE_PRICE'])
+    #rename columns to dates without time formats
+    columns = {}
+    for col in avgprice.columns:
+        try:
+            columns[col] = col.date()
+        except ValueError:
+            pass
+    avgprice.rename(columns=columns, inplace=True)
 
-    avgprice.to_csv('avgprice.csv')
+    avgprice.astype(float).round(2).to_csv('avgprice.csv',date_format='%Y-%m-%d',na_rep='')
 
     # calculate annual growth
     annualgrowth=chained.copy()
 
     for col in annualgrowth:
         for i, row_value in annualgrowth[col].items():
-            if(col<meta.loc[i,'ITEM_START']+pd.tseries.offsets.DateOffset(years=1)):
+            if(col<meta.loc[i,'ITEM_START']+pd.tseries.offsets.DateOffset(years=1,months=-1)):
                 annualgrowth.at[i,col]=None
             else:
-                if(col<pd.Timestamp("2018-01-01 00:00:00")):
+                if(col<startref+pd.tseries.offsets.DateOffset(years=1)):
                     annualgrowth.at[i,col]=None
                 else:
                     annualgrowth.at[i,col]=(float(row_value)- \
                     float(chained.loc[i,col-pd.tseries.offsets.DateOffset(years=1)])) * 100 / \
                     float(chained.loc[i,col-pd.tseries.offsets.DateOffset(years=1)])
+    #rename columns to dates without time formats
+    columns = {}
+    for col in annualgrowth.columns:
+        try:
+            columns[col] = col.date()
+        except ValueError:
+            pass
+    annualgrowth.rename(columns=columns, inplace=True)                
                     
-                    
-    annualgrowth.to_csv('annualgrowth.csv')
+    annualgrowth.astype(float).round(0).astype(int,errors='ignore').to_csv('annualgrowth.csv',date_format='%Y-%m-%d',na_rep='',float_format="%.0f")
 
     # calculate monthly growth
     monthlygrowth=chained.copy()
 
     for col in monthlygrowth:
         for i, row_value in monthlygrowth[col].items():
-            if(col<meta.loc[i,'ITEM_START']+pd.tseries.offsets.DateOffset(months=1)):
+            if(col<meta.loc[i,'ITEM_START']):
                 monthlygrowth.at[i,col]=None
             else:
-                if(col<pd.Timestamp("2017-02-01 00:00:00")):
+                if(col<startref+pd.tseries.offsets.DateOffset(months=1)):
                     monthlygrowth.at[i,col]=None
                 else:
                     monthlygrowth.at[i,col]=(float(row_value)- \
                     float(chained.loc[i,col-pd.tseries.offsets.DateOffset(months=1)])) * 100 / \
                     float(chained.loc[i,col-pd.tseries.offsets.DateOffset(months=1)])
-                    
-    monthlygrowth.to_csv('monthlygrowth.csv')
+
+    #rename columns to dates without time formats
+    columns = {}
+    for col in monthlygrowth.columns:
+        try:
+            columns[col] = col.date()
+        except ValueError:
+            pass
+    monthlygrowth.rename(columns=columns, inplace=True)
+
+    monthlygrowth.astype(float).round(0).astype(int,errors='ignore').to_csv('monthlygrowth.csv',date_format='%Y-%m-%d',na_rep='',float_format="%.0f")
 
     #turn it into a excel datadownload file
-    with pd.ExcelWriter("datadownload.xlsx") as writer:
-        meta.to_excel(writer, sheet_name="metadata")  
-        un.to_excel(writer, sheet_name="unchained")
-        avgprice.to_excel(writer, sheet_name="averageprice")
-        monthlygrowth.to_excel(writer, sheet_name="monthlygrowth")
-        annualgrowth.to_excel(writer,sheet_name="annualgrowth")
-    
+    with pd.ExcelWriter("datadownload.xlsx", mode="a", if_sheet_exists="replace", date_format="YYYY-MM-DD", datetime_format="YYYY-MM-DD") as writer:
+        meta.drop(columns=['AVERAGE_PRICE']).to_excel(writer, sheet_name="metadata")  
+        # un.to_excel(writer, sheet_name="unchained")
+        chained.astype(float).round(3).to_excel(writer, sheet_name="chained")
+        avgprice.astype(float).round(2).fillna('').to_excel(writer, sheet_name="averageprice")
+        monthlygrowth.astype(float).round(0).fillna('').to_excel(writer, sheet_name="monthlygrowth")
+        annualgrowth.astype(float).round(0).fillna('').to_excel(writer,sheet_name="annualgrowth")
+        
+else:
+    print('Nothing to update')    
