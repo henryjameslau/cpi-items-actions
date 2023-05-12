@@ -14,10 +14,8 @@ avgpriceRefMonth=pd.Timestamp('2023-01-01 00:00:00')
 # starting reference point
 startref=pd.Timestamp('2018-01-01 00:00:00')
 
-custom_date_parser = lambda x: datetime.strptime(x, "%Y%m")
-
 #read in metadata
-meta = pd.read_csv('./metadata.csv',index_col=0,parse_dates=['ITEM_START'],date_parser=custom_date_parser)
+meta = pd.read_csv('./metadata.csv',index_col=0,parse_dates=['ITEM_START'],date_format="%Y%m")
 
 # define a function to split a string at a certain occurance of a separator
 
