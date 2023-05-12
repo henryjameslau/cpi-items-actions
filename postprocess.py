@@ -6,7 +6,7 @@ from datetime import datetime,date
 
 #save timestamp to text file
 with open('timestamp.txt', 'w') as f:
-    f.write(date.today())
+    f.write(datetime.now().strftime("%Y-%b-%d"))
 
 # set average price reference month
 avgpriceRefMonth=pd.Timestamp('2023-01-01 00:00:00')
@@ -30,7 +30,7 @@ def split(strng, sep, pos):
 unchained = pd.read_csv('unchained.csv')
 
 #find the last month in the unchained file
-latestmonth=datetime.strptime(unchained.columns[-1],"%Y-%m-%d %H:%M:%S")
+latestmonth=datetime.strptime(unchained.columns[-1],"%Y-%m-%d")
 
 # first get the data.json from the cpi items and prices page
 
@@ -81,7 +81,7 @@ if(itemmonth!=latestmonth):
     columns = {}
     for col in unchained.columns:
         try:
-            columns[col] = datetime.strptime(str(col), "%Y-%m-%d  %H:%M:%S")
+            columns[col] = datetime.strptime(str(col), "%Y-%m-%d")
         except ValueError:
             pass
     unchained.rename(columns=columns, inplace=True)
@@ -98,18 +98,6 @@ if(itemmonth!=latestmonth):
             un.at[index,jancol]=un.loc[index,prevdec]*value/100
     
     un.set_index("ITEM_ID",inplace=True)
-
-    #rename columns to dates without time formats
-    columns = {}
-    for col in un.columns:
-        try:
-            columns[col] = col.date()
-        except ValueError:
-            pass
-    un.rename(columns=columns, inplace=True)
-    
-    #and save it
-    un.to_csv('unchained.csv')
 
     #create a copy of unchained to create the chained indices
     chained = un.copy()
@@ -136,16 +124,7 @@ if(itemmonth!=latestmonth):
             else:
                 chained.at[i,col]=None
 
-    #rename columns to dates without time formats
-    columns = {}
-    for col in chained.columns:
-        try:
-            columns[col] = col.date()
-        except ValueError:
-            pass
-    chained.rename(columns=columns, inplace=True)
-
-    chained.astype(float).round(3).to_csv('chained.csv',date_format='%Y-%m-%d',na_rep='')
+    
 
     # Then calculate average prices
     avgprice=chained.copy()
@@ -219,6 +198,30 @@ if(itemmonth!=latestmonth):
     monthlygrowth.rename(columns=columns, inplace=True)
 
     monthlygrowth.astype(float).round(0).astype(int,errors='ignore').to_csv('monthlygrowth.csv',date_format='%Y-%m-%d',na_rep='',float_format="%.0f")
+    
+    #Finally save the unchained and chainedvnumbers to csv
+    #rename columns to dates without time formats
+    columns = {}
+    for col in un.columns:
+        try:
+            columns[col] = col.date()
+        except ValueError:
+            pass
+    un.rename(columns=columns, inplace=True)
+    
+    #and save it
+    un.to_csv('unchained.csv')
+
+    #rename columns to dates without time formats
+    columns = {}
+    for col in chained.columns:
+        try:
+            columns[col] = col.date()
+        except ValueError:
+            pass
+    chained.rename(columns=columns, inplace=True)
+
+    chained.astype(float).round(3).to_csv('chained.csv',date_format='%Y-%m-%d',na_rep='')
 
     #turn it into a excel datadownload file
     with pd.ExcelWriter("datadownload.xlsx", mode="a", if_sheet_exists="replace", date_format="YYYY-MM-DD", datetime_format="YYYY-MM-DD") as writer:
@@ -228,6 +231,6 @@ if(itemmonth!=latestmonth):
         avgprice.astype(float).round(2).fillna('').to_excel(writer, sheet_name="averageprice")
         monthlygrowth.astype(float).round(0).fillna('').to_excel(writer, sheet_name="monthlygrowth")
         annualgrowth.astype(float).round(0).fillna('').to_excel(writer,sheet_name="annualgrowth")
-        
+
 else:
     print('Nothing to update')    
