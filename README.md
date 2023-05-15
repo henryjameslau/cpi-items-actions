@@ -3,7 +3,7 @@ This repo uses Github actions to format CPIH data for the [Shopping Prices Compa
 
 To prepare the metadata file from the excel sheet provided by the business area, copy the columns from the unchained sheet. Set the `AVERAGE_PRICE` column to a number (to remove £) and to 3dp. 
 
-To prepare the unchained values, remove the metadata columns except the `ITEM_ID` column. Remove any columns before the reference year.
+To prepare the unchained values, remove the metadata columns except the `ITEM_ID` column. Remove any columns before the reference year. You'll probably have to resave the file with column renamed in the date format expected by python which is `YYYY-MM-DD`.
 
 There are two reference values in the python script, the reference month for average prices when the timeseries starts for items which is normally 5 years, so in 2023 the start was Jan 2018.
 
