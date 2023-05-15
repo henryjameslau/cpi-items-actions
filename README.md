@@ -9,3 +9,9 @@ There are two reference values in the python script, the reference month for ave
 
 You can run the action to manually get the script to run and update files through the actions tab.
 
+#How it works
+The script reads the unchained file to read the latest month. It then goes to the ONS website to the [prices and indices dataset](https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes) and find the first link that contains some keywords and then downloads that file. It looks at the month in that file and compares it to the latest month from the unchained.csv file. 
+
+If the month is different, it adds on that column to the unchained file. If it's January, it chains it onto December. Once the unchained file is updated, the script run through and created the chained indices, average prices, monthly growth and annual growth. 
+
+The datadownload file then gets updated with the metadata, chained, average prices, monthly and annual growth. And the individual csv files are saved. 
