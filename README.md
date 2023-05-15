@@ -1,5 +1,5 @@
 # cpi-items-actions
-This repo uses Github actions to format CPIH data for the [Shopping Prices Comparison Tool](https://www.ons.gov.uk/economy/inflationandpriceindices/articles/shoppingpricescomparisontool/2023-05-03).
+This repo uses Github actions to format CPIH data for the [Shopping Prices Comparison Tool](https://www.ons.gov.uk/economy/inflationandpriceindices/articles/shoppingpricescomparisontool/2023-05-03). The action is set to run at 7:01 every week day between the 14 and 22 of each month. It then runs the [python script](https://github.com/henryjameslau/cpi-items-actions/blob/main/postprocess.py). 
 
 To prepare the metadata, copy the columns from the unchained sheet. Set the `AVERAGE_PRICE` column to a number (to remove £) and to 3dp. 
 
