@@ -1,3 +1,5 @@
+[Now superseeded by a fork of this repo but on ONSvisual.](https://github.com/ONSvisual/cpi-items-actions)
+
 # cpi-items-actions
 This repo uses Github actions to format CPIH data for the [Shopping Prices Comparison Tool](https://www.ons.gov.uk/economy/inflationandpriceindices/articles/shoppingpricescomparisontool/2023-05-03). The action is set to run at 7:01 every week day between the 14 and 27 of each month. It then runs the [python script](https://github.com/henryjameslau/cpi-items-actions/blob/main/postprocess.py). 
 
